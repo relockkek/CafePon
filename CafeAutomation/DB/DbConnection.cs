@@ -32,11 +32,19 @@ namespace CafeAutomation.DB
 
             try
             {
-                // Проверяем, открыто ли соединение
+                // Проверяем, не находится ли соединение в состоянии подключения
+                if (_connection.State == ConnectionState.Connecting)
+                {
+                    MessageBox.Show("Соединение уже в процессе открытия");
+                    return false;
+                }
+
+                // Открываем только если соединение ещё не открыто
                 if (_connection.State != ConnectionState.Open)
                 {
                     _connection.Open();
                 }
+
                 return true;
             }
             catch (MySqlException e)

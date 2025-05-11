@@ -59,25 +59,25 @@ namespace CafeAutomation.ViewModels
         {
             try
             {
+                // Убедимся, что соединение закрыто перед новым запросом
+                UsersDB.GetDb().CloseConnection();
+
                 var start = DateTime.Now.Date;
                 var end = DateTime.Now.Date.AddDays(1);
 
-                // Выручка за день
                 decimal totalRevenue = await OrdersDB.GetDb().GetTotalRevenueAsync(start, end);
-                TodayRevenue = $"Выручка: {totalRevenue:C}";
+                TodayRevenue = $"Выручка за день: {totalRevenue:C}";
 
-                // Популярное блюдо
                 var dish = await DishesDB.GetDb().GetMostPopularDishAsync();
-                PopularDish = dish?.Name ?? "Нет данных";
+                PopularDish = $"Популярное блюдо: {dish?.Name ?? "Нет данных"}";
 
-                // Состояние столов
                 var tables = await TablesDB.GetDb().SelectAllAsync();
                 int activeTables = tables.Count(t => t.IsActive);
                 TablesStatus = $"{activeTables} из {tables.Count} столов занято";
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Ошибка загрузки главной страницы: " + ex.Message);
+                MessageBox.Show("Ошибка загрузки данных: " + ex.Message);
             }
         }
     }
