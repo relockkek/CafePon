@@ -1,0 +1,34 @@
+﻿<Page x:Class="CafeAutomation.Views.ReservationsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      mc:Ignorable="d"
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="Бронирование">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Добавить" Command="{Binding AddReservation}" Margin="5" Width="100" Background="#007BFF" Foreground="White"/>
+            <Button Content="Обновить" Command="{Binding UpdateReservation}" Margin="5" Width="100" Background="#28A745" Foreground="White"/>
+            <Button Content="Удалить" Command="{Binding RemoveReservation}" Margin="5" Width="100" Background="#DC3545" Foreground="White"/>
+        </StackPanel>
+
+        <DataGrid ItemsSource="{Binding Reservations}" SelectedItem="{Binding SelectedReservation}"
+                  Grid.Row="1" AutoGenerateColumns="False" Margin="0,10,0,0">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="ID" Binding="{Binding ID}" Width="50"/>
+                <DataGridTextColumn Header="Стол" Binding="{Binding TableID}"/>
+                <DataGridTextColumn Header="Имя клиента" Binding="{Binding CustomerName}"/>
+                <DataGridTextColumn Header="Телефон" Binding="{Binding CustomerPhone}"/>
+                <DataGridTextColumn Header="Гости" Binding="{Binding GuestsCount}"/>
+                <DataGridTextColumn Header="Дата" Binding="{Binding ReservationDate}"/>
+                <DataGridTextColumn Header="Статус" Binding="{Binding Status}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</Page>
