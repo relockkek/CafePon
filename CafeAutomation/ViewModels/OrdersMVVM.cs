@@ -4,6 +4,7 @@ using CafeAutomation.DB;
 using CafeAutomation.ViewModels;
 using System.Threading.Tasks;
 using CafeAutomation.Models;
+using CafeAutomation.Views;
 
 namespace CafeAutomation.ViewModels
 {
@@ -11,6 +12,8 @@ namespace CafeAutomation.ViewModels
     {
         private Orders selectedOrder;
         private ObservableCollection<Orders> orders = new();
+        public OrderItemsMVVM OrderItemsVM { get; } = new OrderItemsMVVM();
+
 
         public ObservableCollection<Orders> Orders
         {
@@ -42,21 +45,12 @@ namespace CafeAutomation.ViewModels
 
             AddOrder = new CommandMvvm((_) =>
             {
-                var order = new Orders
-                {
-                    EmployeeID = 1,
-                    TableNumber = 1,
-                    OrderDate = DateTime.Now,
-                    TotalAmount = 0,
-                    StatusID = 1
-                };
+                var dialog = new CreateOrderDialog(); // имя окна
+                dialog.ShowDialog();                  // открыть окно
 
-                if (OrdersDB.GetDb().Insert(order))
-                {
-                    LoadDataAsync();
-                    SelectedOrder = order;
-                }
-            }, (_) => true);
+                LoadDataAsync(); // обновить список заказов после закрытия окна
+            });
+
 
             UpdateOrder = new CommandMvvm(async (_) =>
             {

@@ -10,18 +10,20 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
-using CafeAutomation.ViewModels;    
+using CafeAutomation.ViewModels;
 
 namespace CafeAutomation.Views
 {
-    public partial class OrdersPage : Page
+    /// <summary>
+    /// Логика взаимодействия для CreateOrderDialog.xaml
+    /// </summary>
+    public partial class CreateOrderDialog : Window
     {
-        public OrdersPage()
+        public CreateOrderDialog()
         {
             InitializeComponent();
-            DataContext = new OrdersMVVM();
+            DataContext = new CreateOrderVM();
         }
     }
 }

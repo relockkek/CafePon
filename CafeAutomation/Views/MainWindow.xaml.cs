@@ -22,10 +22,11 @@ namespace CafeAutomation
             MainFrame.Navigate(new Home());
         }
 
-        private void NavigateToOrders_Click(object sender, RoutedEventArgs e)
+        private void OrdersButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Страница заказов ещё в разработке.");
+            MainFrame.Navigate(new OrdersPage());
         }
+
 
         private void Exit_Click(object sender, RoutedEventArgs e)
         {

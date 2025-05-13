@@ -3,32 +3,43 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       Title="Управление заказами">
 
-    <Grid Background="#F8F9FA">
-        <!-- Заголовок -->
-        <TextBlock Text="Управление заказами" 
-                   FontSize="24" 
-                   FontWeight="Bold" 
-                   HorizontalAlignment="Center" 
-                   Margin="0,20,0,0" />
+    <Grid Margin="20">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="3*" />
+        </Grid.ColumnDefinitions>
 
-        <!-- Таблица заказов -->
-        <DataGrid ItemsSource="{Binding Orders}" 
-                  AutoGenerateColumns="False"
-                  Margin="20"
-                  CanUserAddRows="False"
-                  IsReadOnly="True">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Название" Binding="{Binding Name}" />
-                <DataGridTextColumn Header="Описание" Binding="{Binding Description}" />
-                <DataGridTextColumn Header="Цена" Binding="{Binding Price, StringFormat={}{0:C}}" />
-                <DataGridCheckBoxColumn Header="Доступность" Binding="{Binding IsActive}" />
-            </DataGrid.Columns>
-        </DataGrid>
+        <!-- Заказы -->
+        <StackPanel Grid.Column="0">
+            <TextBlock Text="Заказы" FontSize="20" FontWeight="Bold" Margin="0 0 0 10"/>
+            <ListBox ItemsSource="{Binding Orders}"
+                 SelectedItem="{Binding SelectedOrder}"
+                 DisplayMemberPath="OrderDate"
+                 Height="300"/>
 
-        <!-- Кнопка добавления блюда -->
-        <Button Content="Добавить блюдо" 
-                Command="{Binding AddDishCommand}"
-                HorizontalAlignment="Right"
-                Margin="0,0,20,20" />
+            <StackPanel Orientation="Horizontal" Margin="0 10 0 0">
+                <Button Content="Добавить заказ" Command="{Binding AddOrder}" Margin="0 0 5 0"/>
+                <Button Content="Обновить" Command="{Binding UpdateOrder}" Margin="0 0 5 0"/>
+                <Button Content="Удалить" Command="{Binding RemoveOrder}" />
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Состав заказа -->
+        <StackPanel Grid.Column="1" Margin="20 0 0 0">
+            <TextBlock Text="Состав заказа" FontSize="20" FontWeight="Bold" Margin="0 0 0 10"/>
+            <ListBox ItemsSource="{Binding OrderItemsVM.Items}" Height="300">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Блюдо ID: " />
+                            <TextBlock Text="{Binding DishID}" FontWeight="Bold" Margin="5,0"/>
+                            <TextBlock Text=" Кол-во: " />
+                            <TextBlock Text="{Binding Amount}" FontWeight="Bold" Margin="5,0"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </StackPanel>
     </Grid>
+
 </Page>
