@@ -40,7 +40,7 @@ namespace CafeAutomation.ViewModels
         {
             LoadDataAsync(); // Асинхронная загрузка данных
 
-            AddOrder = new CommandMvvm(() =>
+            AddOrder = new CommandMvvm((_) =>
             {
                 var order = new Orders
                 {
@@ -56,25 +56,25 @@ namespace CafeAutomation.ViewModels
                     LoadDataAsync();
                     SelectedOrder = order;
                 }
-            }, () => true);
+            }, (_) => true);
 
-            UpdateOrder = new CommandMvvm(async () =>
+            UpdateOrder = new CommandMvvm(async (_) =>
             {
                 if (SelectedOrder != null && await OrdersDB.GetDb().UpdateAsync(SelectedOrder))
                 {
                     MessageBox.Show("Обновлено");
                     await LoadDataAsync();
                 }
-            }, () => SelectedOrder != null);
+            }, (_) => SelectedOrder != null);
 
-            RemoveOrder = new CommandMvvm(async () =>
+            RemoveOrder = new CommandMvvm(async (_) =>
             {
                 if (SelectedOrder != null && await OrdersDB.GetDb().DeleteAsync(SelectedOrder))
                 {
                     MessageBox.Show("Удалён заказ");
                     await LoadDataAsync();
                 }
-            }, () => SelectedOrder != null);
+            }, (_) => SelectedOrder != null);
         }
 
         private async Task LoadDataAsync()

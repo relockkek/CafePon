@@ -1,34 +1,32 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
-using CafeAutomation.Models;
 using MySqlConnector;
+using CafeAutomation.Models;
 
-namespace CafeAutomation.DB
+internal class UsersDB : BaseDB
 {
-    internal class UsersDB
+    private static UsersDB instance;
+    public static UsersDB GetDb() => instance ??= new UsersDB();
+
+    private UsersDB() { }
+
+    public bool Insert(Users user)
     {
-        private DbConnection connection;
-
-        private UsersDB(DbConnection db)
+        bool result = false;
+        using (var db = DbConnection.GetDbConnection())
         {
-            this.connection = db;
-        }
-
-        public bool Insert(Users user)
-        {
-            bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
+            if (!db.OpenConnection()) return result;
 
             string query = "INSERT INTO Users (EmployeeID, Username, Password, Role) VALUES (@empId, @username, @password, @role); SELECT LAST_INSERT_ID();";
 
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = db.CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("empId", user.EmployeeID));
-                cmd.Parameters.Add(new MySqlParameter("username", user.Username));
-                cmd.Parameters.Add(new MySqlParameter("password", user.Password));
-                cmd.Parameters.Add(new MySqlParameter("role", user.Role));
+                cmd.Parameters.AddWithValue("@empId", user.EmployeeID);
+                cmd.Parameters.AddWithValue("@username", user.Username);
+                cmd.Parameters.AddWithValue("@password", user.Password);
+                cmd.Parameters.AddWithValue("@role", user.Role);
 
                 try
                 {
@@ -44,19 +42,20 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка при добавлении пользователя: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return result;
         }
 
-        public async Task<List<Users>> SelectAllAsync()
-        {
-            List<Users> list = new List<Users>();
-            if (connection == null || !connection.OpenConnection())
-                return list;
+        return result;
+    }
 
-            string query = "SELECT ID, EmployeeID, Username, Password, Role FROM Users";
-            using (var cmd = connection.CreateCommand(query))
+    public async Task<List<Users>> SelectAllAsync()
+    {
+        List<Users> list = new List<Users>();
+        using (var db = DbConnection.GetDbConnection())
+        {
+            if (!db.OpenConnection()) return list;
+
+            const string query = "SELECT ID, EmployeeID, Username, Password, Role FROM Users";
+            using (var cmd = db.CreateCommand(query))
             {
                 try
                 {
@@ -81,25 +80,26 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка загрузки пользователей: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return list;
         }
 
-        public async Task<bool> UpdateAsync(Users user)
+        return list;
+    }
+
+    public async Task<bool> UpdateAsync(Users user)
+    {
+        bool result = false;
+        using (var db = DbConnection.GetDbConnection())
         {
-            bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
+            if (!db.OpenConnection()) return result;
 
             string query = "UPDATE Users SET EmployeeID=@empId, Username=@user, Password=@pass, Role=@role WHERE ID=@id";
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = db.CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("empId", user.EmployeeID));
-                cmd.Parameters.Add(new MySqlParameter("user", user.Username));
-                cmd.Parameters.Add(new MySqlParameter("pass", user.Password));
-                cmd.Parameters.Add(new MySqlParameter("role", user.Role));
-                cmd.Parameters.Add(new MySqlParameter("id", user.ID));
+                cmd.Parameters.AddWithValue("@empId", user.EmployeeID);
+                cmd.Parameters.AddWithValue("@user", user.Username);
+                cmd.Parameters.AddWithValue("@pass", user.Password);
+                cmd.Parameters.AddWithValue("@role", user.Role);
+                cmd.Parameters.AddWithValue("@id", user.ID);
 
                 try
                 {
@@ -111,21 +111,22 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка обновления пользователя: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return result;
         }
 
-        public async Task<bool> DeleteAsync(Users user)
+        return result;
+    }
+
+    public async Task<bool> DeleteAsync(Users user)
+    {
+        bool result = false;
+        using (var db = DbConnection.GetDbConnection())
         {
-            bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
+            if (!db.OpenConnection()) return result;
 
             string query = "DELETE FROM Users WHERE ID=@id";
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = db.CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("id", user.ID));
+                cmd.Parameters.AddWithValue("@id", user.ID);
 
                 try
                 {
@@ -137,21 +138,23 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка удаления пользователя: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return result;
         }
-        public Users FindByUsernameAndPassword(string username, string password)
-        {
-            Users user = null;
-            if (connection == null || !connection.OpenConnection())
-                return user;
 
-            string query = "SELECT ID, EmployeeID, Username, Password, Role FROM Users WHERE Username=@username AND Password=@password";
-            using (var cmd = connection.CreateCommand(query))
+        return result;
+    }
+
+    public Users FindByUsernameAndPassword(string username, string password)
+    {
+        Users user = null;
+        using (var db = DbConnection.GetDbConnection())
+        {
+            if (!db.OpenConnection()) return user;
+
+            const string query = "SELECT ID, EmployeeID, Username, Password, Role FROM Users WHERE Username=@username AND Password=@password";
+            using (var cmd = db.CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("username", username));
-                cmd.Parameters.Add(new MySqlParameter("password", password));
+                cmd.Parameters.AddWithValue("@username", username);
+                cmd.Parameters.AddWithValue("@password", password);
 
                 try
                 {
@@ -171,37 +174,37 @@ namespace CafeAutomation.DB
 
                     reader.Close();
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Ошибка при поиске пользователя: " + ex.Message);
+                }
             }
-
-            connection.CloseConnection();
-            return user;
         }
-        public bool CheckAdminExists()
-        {
-            if (connection == null || !connection.OpenConnection())
-                return false;
 
-            string query = "SELECT COUNT(*) FROM Users WHERE Username = 'admin'";
-            using (var cmd = connection.CreateCommand(query))
+        return user;
+    }
+
+    public bool CheckAdminExists()
+    {
+        using (var db = DbConnection.GetDbConnection())
+        {
+            if (!db.OpenConnection()) return false;
+
+            const string query = "SELECT COUNT(*) FROM Users WHERE Username = 'admin'";
+            using (var cmd = db.CreateCommand(query))
             {
                 try
                 {
                     var count = Convert.ToInt32(cmd.ExecuteScalar());
                     return count > 0;
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Ошибка проверки наличия администратора: " + ex.Message);
+                }
             }
+        }
 
-            connection.CloseConnection();
-            return false;
-        }
-        static UsersDB instance;
-        public static UsersDB GetDb()
-        {
-            if (instance == null)
-                instance = new UsersDB(DbConnection.GetDbConnection());
-            return instance;
-        }
+        return false;
     }
 }

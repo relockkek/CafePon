@@ -1,18 +1,14 @@
 ﻿using System.Windows;
-using CafeAutomation.ViewModels;
+using System.Windows.Controls;
 using CafeAutomation.Views;
 
 namespace CafeAutomation
 {
-        public partial class MainWindow : Window
+    public partial class MainWindow : Window
+    {
+        public MainWindow()
         {
-            public MainWindow()
-            {
-                InitializeComponent();
-                DataContext = new HomeMVVM(); 
-            }
-        private void NavigateToHome_Click(object sender, RoutedEventArgs e)
-        {
+            InitializeComponent();
             MainFrame.Navigate(new Home());
         }
 
@@ -21,24 +17,19 @@ namespace CafeAutomation
             MainFrame.Navigate(new MenuPage());
         }
 
+        private void NavigateToHome_Click(object sender, RoutedEventArgs e)
+        {
+            MainFrame.Navigate(new Home());
+        }
+
         private void NavigateToOrders_Click(object sender, RoutedEventArgs e)
         {
-            MainFrame.Navigate(new OrdersPage());
+            MessageBox.Show("Страница заказов ещё в разработке.");
         }
 
-        private void NavigateToReservations_Click(object sender, RoutedEventArgs e)
+        private void Exit_Click(object sender, RoutedEventArgs e)
         {
-            MainFrame.Navigate(new ReservationsPage());
-        }
-
-        private void NavigateToEmployees_Click(object sender, RoutedEventArgs e)
-        {
-            MainFrame.Navigate(new EmployeesPage());
-        }
-
-        private void ExitApp_Click(object sender, RoutedEventArgs e)
-        {
-            this.Close();
+            Application.Current.Shutdown();
         }
     }
 }

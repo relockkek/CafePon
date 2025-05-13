@@ -1,35 +1,33 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
-using CafeAutomation.Models;
 using MySqlConnector;
+using CafeAutomation.Models;
 
-namespace CafeAutomation.DB
+internal class DishesDB : BaseDB
 {
-    internal class DishesDB
+    private static DishesDB instance;
+    public static DishesDB GetDb() => instance ??= new DishesDB();
+
+    private DishesDB() { }
+
+    public bool Insert(Dishes dish)
     {
-        private DbConnection connection;
-
-        private DishesDB(DbConnection db)
+        bool result = false;
+        using (var db = DbConnection.GetDbConnection())
         {
-            this.connection = db;
-        }
-
-        public bool Insert(Dishes dish)
-        {
-            bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
+            if (!db.OpenConnection()) return result;
 
             string query = "INSERT INTO Dishes (Name, Price, Category, Description, IsAvailable) VALUES (@name, @price, @category, @desc, @available); SELECT LAST_INSERT_ID();";
 
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = db.CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("name", dish.Name));
-                cmd.Parameters.Add(new MySqlParameter("price", dish.Price));
-                cmd.Parameters.Add(new MySqlParameter("category", dish.Category));
-                cmd.Parameters.Add(new MySqlParameter("desc", dish.Description));
-                cmd.Parameters.Add(new MySqlParameter("available", dish.IsAvailable));
+                cmd.Parameters.AddWithValue("@name", dish.Name);
+                cmd.Parameters.AddWithValue("@price", dish.Price);
+                cmd.Parameters.AddWithValue("@category", dish.Category);
+                cmd.Parameters.AddWithValue("@desc", dish.Description);
+                cmd.Parameters.AddWithValue("@available", dish.IsAvailable);
 
                 try
                 {
@@ -45,19 +43,20 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка при добавлении блюда: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return result;
         }
 
-        public async Task<List<Dishes>> SelectAllAsync()
-        {
-            List<Dishes> list = new List<Dishes>();
-            if (connection == null || !connection.OpenConnection())
-                return list;
+        return result;
+    }
 
-            string query = "SELECT ID, Name, Price, Category, Description, IsAvailable FROM Dishes";
-            using (var cmd = connection.CreateCommand(query))
+    public async Task<List<Dishes>> SelectAllAsync()
+    {
+        List<Dishes> list = new List<Dishes>();
+        using (var db = DbConnection.GetDbConnection())
+        {
+            if (!db.OpenConnection()) return list;
+
+            const string query = "SELECT ID, Name, Price, Category, Description, IsAvailable FROM Dishes";
+            using (var cmd = db.CreateCommand(query))
             {
                 try
                 {
@@ -83,26 +82,27 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка загрузки блюд: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return list;
         }
 
-        public async Task<bool> UpdateAsync(Dishes dish)
+        return list;
+    }
+
+    public async Task<bool> UpdateAsync(Dishes dish)
+    {
+        bool result = false;
+        using (var db = DbConnection.GetDbConnection())
         {
-            bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
+            if (!db.OpenConnection()) return result;
 
             string query = "UPDATE Dishes SET Name=@name, Price=@price, Category=@category, Description=@desc, IsAvailable=@available WHERE ID=@id";
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = db.CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("name", dish.Name));
-                cmd.Parameters.Add(new MySqlParameter("price", dish.Price));
-                cmd.Parameters.Add(new MySqlParameter("category", dish.Category));
-                cmd.Parameters.Add(new MySqlParameter("desc", dish.Description));
-                cmd.Parameters.Add(new MySqlParameter("available", dish.IsAvailable));
-                cmd.Parameters.Add(new MySqlParameter("id", dish.ID));
+                cmd.Parameters.AddWithValue("@name", dish.Name);
+                cmd.Parameters.AddWithValue("@price", dish.Price);
+                cmd.Parameters.AddWithValue("@category", dish.Category);
+                cmd.Parameters.AddWithValue("@desc", dish.Description);
+                cmd.Parameters.AddWithValue("@available", dish.IsAvailable);
+                cmd.Parameters.AddWithValue("@id", dish.ID);
 
                 try
                 {
@@ -114,21 +114,22 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка обновления блюда: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return result;
         }
 
-        public async Task<bool> DeleteAsync(Dishes dish)
+        return result;
+    }
+
+    public async Task<bool> DeleteAsync(Dishes dish)
+    {
+        bool result = false;
+        using (var db = DbConnection.GetDbConnection())
         {
-            bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
+            if (!db.OpenConnection()) return result;
 
             string query = "DELETE FROM Dishes WHERE ID=@id";
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = db.CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("id", dish.ID));
+                cmd.Parameters.AddWithValue("@id", dish.ID);
 
                 try
                 {
@@ -140,18 +141,20 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка удаления блюда: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return result;
         }
-        public async Task<Dishes> GetMostPopularDishAsync()
-        {
-            Dishes mostPopular = null;
-            if (connection == null || !connection.OpenConnection())
-                return mostPopular;
 
-            string query = "SELECT DishID, COUNT(*) AS Count FROM OrderItems GROUP BY DishID ORDER BY Count DESC LIMIT 1";
-            using (var cmd = connection.CreateCommand(query))
+        return result;
+    }
+
+    public async Task<Dishes> GetMostPopularDishAsync()
+    {
+        Dishes mostPopular = null;
+        using (var db = DbConnection.GetDbConnection())
+        {
+            if (!db.OpenConnection()) return mostPopular;
+
+            const string query = "SELECT DishID, COUNT(*) AS Count FROM OrderItems GROUP BY DishID ORDER BY Count DESC LIMIT 1";
+            using (var cmd = db.CreateCommand(query))
             {
                 try
                 {
@@ -165,20 +168,13 @@ namespace CafeAutomation.DB
 
                     reader.Close();
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Ошибка получения популярного блюда: " + ex.Message);
+                }
             }
-
-            connection.CloseConnection();
-            return mostPopular;
         }
 
-
-        static DishesDB instance;
-        public static DishesDB GetDb()
-        {
-            if (instance == null)
-                instance = new DishesDB(DbConnection.GetDbConnection());
-            return instance;
-        }
+        return mostPopular;
     }
 }

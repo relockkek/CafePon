@@ -8,7 +8,7 @@ namespace CafeAutomation.Views
         public Home()
         {
             InitializeComponent();
-            DataContext = new HomeMVVM();
+            DataContext = this;
         }
     }
 }

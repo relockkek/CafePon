@@ -1,38 +1,27 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace CafeAutomation.ViewModels
 {
     public class CommandMvvm : ICommand
     {
-        Action action;
-        Func<bool> canExecute;
+        private readonly Action<object?> execute;
+        private readonly Func<object?, bool> canExecute;
 
-        public CommandMvvm(Action action, Func<bool> canExecute)
+        public CommandMvvm(Action<object?> execute, Func<object?, bool>? canExecute = null)
         {
-            this.action = action;
-            this.canExecute = canExecute;
+            this.execute = execute;
+            this.canExecute = canExecute ?? (_ => true);
         }
+
+        public bool CanExecute(object? parameter) => canExecute(parameter);
+
+        public void Execute(object? parameter) => execute(parameter);
 
         public event EventHandler? CanExecuteChanged
         {
-            add { CommandManager.RequerySuggested += value; }
-            remove { CommandManager.RequerySuggested -= value; }
+            add => CommandManager.RequerySuggested += value;
+            remove => CommandManager.RequerySuggested -= value;
         }
-
-        public bool CanExecute(object? parameter)
-        {
-            return canExecute();
-        }
-
-        public void Execute(object? parameter)
-        {
-            action();
-        }
-
     }
 }

@@ -1,31 +1,29 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
-using CafeAutomation.Models;
 using MySqlConnector;
+using CafeAutomation.Models;
 
-namespace CafeAutomation.DB
+internal class StatusDB : BaseDB
 {
-    internal class StatusDB
+    private static StatusDB instance;
+    public static StatusDB GetDb() => instance ??= new StatusDB();
+
+    private StatusDB() { }
+
+    public bool Insert(Status status)
     {
-        private DbConnection connection;
-
-        private StatusDB(DbConnection db)
+        bool result = false;
+        using (var db = DbConnection.GetDbConnection())
         {
-            this.connection = db;
-        }
-
-        public bool Insert(Status status)
-        {
-            bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
+            if (!db.OpenConnection()) return result;
 
             string query = "INSERT INTO Status (Title) VALUES (@title); SELECT LAST_INSERT_ID();";
 
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = db.CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("title", status.Title));
+                cmd.Parameters.AddWithValue("@title", status.Title);
 
                 try
                 {
@@ -41,19 +39,20 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка при добавлении статуса: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return result;
         }
 
-        public async Task<List<Status>> SelectAllAsync()
-        {
-            List<Status> list = new List<Status>();
-            if (connection == null || !connection.OpenConnection())
-                return list;
+        return result;
+    }
 
-            string query = "SELECT ID, Title FROM Status";
-            using (var cmd = connection.CreateCommand(query))
+    public async Task<List<Status>> SelectAllAsync()
+    {
+        List<Status> list = new List<Status>();
+        using (var db = DbConnection.GetDbConnection())
+        {
+            if (!db.OpenConnection()) return list;
+
+            const string query = "SELECT ID, Title FROM Status";
+            using (var cmd = db.CreateCommand(query))
             {
                 try
                 {
@@ -75,22 +74,23 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка загрузки статусов: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return list;
         }
 
-        public async Task<bool> UpdateAsync(Status status)
+        return list;
+    }
+
+    public async Task<bool> UpdateAsync(Status status)
+    {
+        bool result = false;
+        using (var db = DbConnection.GetDbConnection())
         {
-            bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
+            if (!db.OpenConnection()) return result;
 
             string query = "UPDATE Status SET Title=@title WHERE ID=@id";
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = db.CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("title", status.Title));
-                cmd.Parameters.Add(new MySqlParameter("id", status.ID));
+                cmd.Parameters.AddWithValue("@title", status.Title);
+                cmd.Parameters.AddWithValue("@id", status.ID);
 
                 try
                 {
@@ -102,21 +102,22 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка обновления статуса: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return result;
         }
 
-        public async Task<bool> DeleteAsync(Status status)
+        return result;
+    }
+
+    public async Task<bool> DeleteAsync(Status status)
+    {
+        bool result = false;
+        using (var db = DbConnection.GetDbConnection())
         {
-            bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
+            if (!db.OpenConnection()) return result;
 
             string query = "DELETE FROM Status WHERE ID=@id";
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = db.CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("id", status.ID));
+                cmd.Parameters.AddWithValue("@id", status.ID);
 
                 try
                 {
@@ -128,17 +129,8 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка удаления статуса: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return result;
         }
 
-        static StatusDB instance;
-        public static StatusDB GetDb()
-        {
-            if (instance == null)
-                instance = new StatusDB(DbConnection.GetDbConnection());
-            return instance;
-        }
+        return result;
     }
 }

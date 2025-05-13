@@ -1,37 +1,36 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
-using CafeAutomation.Models;
 using MySqlConnector;
+using CafeAutomation.Models;
 
 namespace CafeAutomation.DB
 {
-    internal class EmployeesDB
+    internal class EmployeesDB : BaseDB
     {
-        private DbConnection connection;
+        // Singleton
+        private static EmployeesDB instance;
+        public static EmployeesDB GetDb() => instance ??= new EmployeesDB();
 
-        private EmployeesDB(DbConnection db)
-        {
-            this.connection = db;
-        }
+        private EmployeesDB() { }
 
         public bool Insert(Employees employee)
         {
             bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
+            if (!OpenConnection()) return result;
 
             string query = "INSERT INTO Employees (FirstName, LastName, Patronymic, Position, Phone, HireDate, Salary) VALUES (@fname, @lname, @patr, @pos, @phone, @hire, @salary); SELECT LAST_INSERT_ID();";
 
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("fname", employee.FirstName));
-                cmd.Parameters.Add(new MySqlParameter("lname", employee.LastName));
-                cmd.Parameters.Add(new MySqlParameter("patr", employee.Patronymic));
-                cmd.Parameters.Add(new MySqlParameter("pos", employee.Position));
-                cmd.Parameters.Add(new MySqlParameter("phone", employee.Phone));
-                cmd.Parameters.Add(new MySqlParameter("hire", employee.HireDate));
-                cmd.Parameters.Add(new MySqlParameter("salary", employee.Salary));
+                cmd.Parameters.AddWithValue("@fname", employee.FirstName);
+                cmd.Parameters.AddWithValue("@lname", employee.LastName);
+                cmd.Parameters.AddWithValue("@patr", employee.Patronymic);
+                cmd.Parameters.AddWithValue("@pos", employee.Position);
+                cmd.Parameters.AddWithValue("@phone", employee.Phone);
+                cmd.Parameters.AddWithValue("@hire", employee.HireDate);
+                cmd.Parameters.AddWithValue("@salary", employee.Salary);
 
                 try
                 {
@@ -48,67 +47,65 @@ namespace CafeAutomation.DB
                 }
             }
 
-            connection.CloseConnection();
             return result;
         }
 
         public async Task<List<Employees>> SelectAllAsync()
         {
             List<Employees> list = new List<Employees>();
-            if (connection == null || !connection.OpenConnection())
-                return list;
-
-            string query = "SELECT ID, FirstName, LastName, Patronymic, Position, Phone, HireDate, Salary FROM Employees";
-            using (var cmd = connection.CreateCommand(query))
+            using (var db = DbConnection.GetDbConnection())
             {
-                try
-                {
-                    var reader = await Task.Run(() => cmd.ExecuteReader());
+                if (!db.OpenConnection()) return list;
 
-                    while (reader.Read())
+                const string query = "SELECT ID, FirstName, LastName, Patronymic, Position, Phone, HireDate, Salary FROM Employees";
+                using (var cmd = db.CreateCommand(query))
+                {
+                    try
                     {
-                        list.Add(new Employees
-                        {
-                            ID = reader.GetInt32(0),
-                            FirstName = reader.GetString(1),
-                            LastName = reader.GetString(2),
-                            Patronymic = reader.IsDBNull(3) ? "" : reader.GetString(3),
-                            Position = reader.GetString(4),
-                            Phone = reader.GetString(5),
-                            HireDate = reader.GetDateTime(6),
-                            Salary = reader.GetDecimal(7)
-                        });
-                    }
+                        var reader = await Task.Run(() => cmd.ExecuteReader());
 
-                    reader.Close();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Ошибка загрузки сотрудников: " + ex.Message);
+                        while (reader.Read())
+                        {
+                            list.Add(new Employees
+                            {
+                                ID = reader.GetInt32(0),
+                                FirstName = reader.GetString(1),
+                                LastName = reader.GetString(2),
+                                Patronymic = reader.IsDBNull(3) ? "" : reader.GetString(3),
+                                Position = reader.GetString(4),
+                                Phone = reader.GetString(5),
+                                HireDate = reader.GetDateTime(6),
+                                Salary = reader.GetDecimal(7)
+                            });
+                        }
+
+                        reader.Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Ошибка загрузки сотрудников: " + ex.Message);
+                    }
                 }
             }
 
-            connection.CloseConnection();
             return list;
         }
-
         public async Task<bool> UpdateAsync(Employees employee)
         {
             bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
+            if (!OpenConnection()) return result;
 
             string query = "UPDATE Employees SET FirstName=@fname, LastName=@lname, Patronymic=@patr, Position=@pos, Phone=@phone, HireDate=@hire, Salary=@salary WHERE ID=@id";
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("fname", employee.FirstName));
-                cmd.Parameters.Add(new MySqlParameter("lname", employee.LastName));
-                cmd.Parameters.Add(new MySqlParameter("patr", employee.Patronymic));
-                cmd.Parameters.Add(new MySqlParameter("pos", employee.Position));
-                cmd.Parameters.Add(new MySqlParameter("phone", employee.Phone));
-                cmd.Parameters.Add(new MySqlParameter("hire", employee.HireDate));
-                cmd.Parameters.Add(new MySqlParameter("salary", employee.Salary));
-                cmd.Parameters.Add(new MySqlParameter("id", employee.ID));
+                cmd.Parameters.AddWithValue("@fname", employee.FirstName);
+                cmd.Parameters.AddWithValue("@lname", employee.LastName);
+                cmd.Parameters.AddWithValue("@patr", employee.Patronymic);
+                cmd.Parameters.AddWithValue("@pos", employee.Position);
+                cmd.Parameters.AddWithValue("@phone", employee.Phone);
+                cmd.Parameters.AddWithValue("@hire", employee.HireDate);
+                cmd.Parameters.AddWithValue("@salary", employee.Salary);
+                cmd.Parameters.AddWithValue("@id", employee.ID);
 
                 try
                 {
@@ -121,20 +118,18 @@ namespace CafeAutomation.DB
                 }
             }
 
-            connection.CloseConnection();
             return result;
         }
 
         public async Task<bool> DeleteAsync(Employees employee)
         {
             bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
+            if (!OpenConnection()) return result;
 
             string query = "DELETE FROM Employees WHERE ID=@id";
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("id", employee.ID));
+                cmd.Parameters.AddWithValue("@id", employee.ID);
 
                 try
                 {
@@ -147,16 +142,7 @@ namespace CafeAutomation.DB
                 }
             }
 
-            connection.CloseConnection();
             return result;
-        }
-
-        static EmployeesDB instance;
-        public static EmployeesDB GetDb()
-        {
-            if (instance == null)
-                instance = new EmployeesDB(DbConnection.GetDbConnection());
-            return instance;
         }
     }
 }

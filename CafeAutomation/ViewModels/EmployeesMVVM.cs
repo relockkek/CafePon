@@ -40,7 +40,7 @@ namespace CafeAutomation.ViewModels
         {
             LoadDataAsync();
 
-            AddEmployee = new CommandMvvm(() =>
+            AddEmployee = new CommandMvvm((_) =>
             {
                 var emp = new Employees
                 {
@@ -52,25 +52,25 @@ namespace CafeAutomation.ViewModels
                     LoadDataAsync();
                     SelectedEmployee = emp;
                 }
-            }, () => true);
+            }, (_) => true);
 
-            UpdateEmployee = new CommandMvvm(async () =>
+            UpdateEmployee = new CommandMvvm(async (_) =>
             {
                 if (SelectedEmployee != null && await EmployeesDB.GetDb().UpdateAsync(SelectedEmployee))
                 {
                     MessageBox.Show("Обновлено");
                     await LoadDataAsync();
                 }
-            }, () => SelectedEmployee != null);
+            }, (_) => SelectedEmployee != null);
 
-            RemoveEmployee = new CommandMvvm(async () =>
+            RemoveEmployee = new CommandMvvm(async (_) =>
             {
                 if (SelectedEmployee != null && await EmployeesDB.GetDb().DeleteAsync(SelectedEmployee))
                 {
                     MessageBox.Show("Удалён");
                     await LoadDataAsync();
                 }
-            }, () => SelectedEmployee != null);
+            }, (_) => SelectedEmployee != null);
         }
 
         private async Task LoadDataAsync()

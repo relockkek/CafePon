@@ -1,111 +1,112 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
-using CafeAutomation.Models;
 using MySqlConnector;
+using CafeAutomation.Models;
 
 namespace CafeAutomation.DB
 {
-    internal class ReservationsDB
+    internal class ReservationsDB : BaseDB
     {
-        private DbConnection connection;
+        // Singleton
+        private static ReservationsDB instance;
+        public static ReservationsDB GetDb() => instance ??= new ReservationsDB();
 
-        private ReservationsDB(DbConnection db)
-        {
-            this.connection = db;
-        }
+        private ReservationsDB() { }
 
         public bool Insert(Reservations reservation)
         {
             bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
-
-            string query = "INSERT INTO Reservations (TableID, CustomerName, CustomerPhone, GuestsCount, ReservationDate, Status) VALUES (@tableId, @name, @phone, @guests, @date, @status); SELECT LAST_INSERT_ID();";
-
-            using (var cmd = connection.CreateCommand(query))
+            using (var db = DbConnection.GetDbConnection())
             {
-                cmd.Parameters.Add(new MySqlParameter("tableId", reservation.TableID));
-                cmd.Parameters.Add(new MySqlParameter("name", reservation.CustomerName));
-                cmd.Parameters.Add(new MySqlParameter("phone", reservation.CustomerPhone));
-                cmd.Parameters.Add(new MySqlParameter("guests", reservation.GuestsCount));
-                cmd.Parameters.Add(new MySqlParameter("date", reservation.ReservationDate));
-                cmd.Parameters.Add(new MySqlParameter("status", reservation.Status));
+                if (!db.OpenConnection()) return result;
 
-                try
+                string query = "INSERT INTO Reservations (TableID, CustomerName, CustomerPhone, GuestsCount, ReservationDate, Status) VALUES (@tableId, @name, @phone, @guests, @date, @status); SELECT LAST_INSERT_ID();";
+
+                using (var cmd = db.CreateCommand(query))
                 {
-                    var id = cmd.ExecuteScalar();
-                    if (id != null)
+                    cmd.Parameters.AddWithValue("@tableId", reservation.TableID);
+                    cmd.Parameters.AddWithValue("@name", reservation.CustomerName);
+                    cmd.Parameters.AddWithValue("@phone", reservation.CustomerPhone);
+                    cmd.Parameters.AddWithValue("@guests", reservation.GuestsCount);
+                    cmd.Parameters.AddWithValue("@date", reservation.ReservationDate);
+                    cmd.Parameters.AddWithValue("@status", reservation.Status);
+
+                    try
                     {
-                        reservation.ID = Convert.ToInt32(id);
-                        result = true;
+                        var id = cmd.ExecuteScalar();
+                        if (id != null)
+                        {
+                            reservation.ID = Convert.ToInt32(id);
+                            result = true;
+                        }
                     }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Ошибка при добавлении бронирования: " + ex.Message);
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Ошибка при добавлении бронирования: " + ex.Message);
+                    }
                 }
             }
 
-            connection.CloseConnection();
             return result;
         }
 
         public async Task<List<Reservations>> SelectAllAsync()
         {
             List<Reservations> list = new List<Reservations>();
-            if (connection == null || !connection.OpenConnection())
-                return list;
-
-            string query = "SELECT ID, TableID, CustomerName, CustomerPhone, GuestsCount, ReservationDate, Status FROM Reservations";
-            using (var cmd = connection.CreateCommand(query))
+            using (var db = DbConnection.GetDbConnection())
             {
-                try
-                {
-                    var reader = await Task.Run(() => cmd.ExecuteReader());
+                if (!db.OpenConnection()) return list;
 
-                    while (reader.Read())
+                const string query = "SELECT ID, TableID, CustomerName, CustomerPhone, GuestsCount, ReservationDate, Status FROM Reservations";
+                using (var cmd = db.CreateCommand(query))
+                {
+                    try
                     {
-                        list.Add(new Reservations
-                        {
-                            ID = reader.GetInt32(0),
-                            TableID = reader.GetInt32(1),
-                            CustomerName = reader.GetString(2),
-                            CustomerPhone = reader.GetString(3),
-                            GuestsCount = reader.GetInt32(4),
-                            ReservationDate = reader.GetDateTime(5),
-                            Status = reader.GetString(6)
-                        });
-                    }
+                        var reader = await Task.Run(() => cmd.ExecuteReader());
 
-                    reader.Close();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Ошибка загрузки бронирований: " + ex.Message);
+                        while (reader.Read())
+                        {
+                            list.Add(new Reservations
+                            {
+                                ID = reader.GetInt32(0),
+                                TableID = reader.GetInt32(1),
+                                CustomerName = reader.IsDBNull(2) ? "" : reader.GetString(2),
+                                CustomerPhone = reader.IsDBNull(3) ? "" : reader.GetString(3),
+                                GuestsCount = reader.GetInt32(4),
+                                ReservationDate = reader.GetDateTime(5),
+                                Status = reader.IsDBNull(6) ? "" : reader.GetString(6)
+                            });
+                        }
+
+                        reader.Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Ошибка загрузки бронирований: " + ex.Message);
+                    }
                 }
             }
 
-            connection.CloseConnection();
             return list;
         }
 
         public async Task<bool> UpdateAsync(Reservations reservation)
         {
             bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
+            if (!OpenConnection()) return result;
 
             string query = "UPDATE Reservations SET TableID=@tableId, CustomerName=@name, CustomerPhone=@phone, GuestsCount=@guests, ReservationDate=@date, Status=@status WHERE ID=@id";
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("tableId", reservation.TableID));
-                cmd.Parameters.Add(new MySqlParameter("name", reservation.CustomerName));
-                cmd.Parameters.Add(new MySqlParameter("phone", reservation.CustomerPhone));
-                cmd.Parameters.Add(new MySqlParameter("guests", reservation.GuestsCount));
-                cmd.Parameters.Add(new MySqlParameter("date", reservation.ReservationDate));
-                cmd.Parameters.Add(new MySqlParameter("status", reservation.Status));
-                cmd.Parameters.Add(new MySqlParameter("id", reservation.ID));
+                cmd.Parameters.AddWithValue("@tableId", reservation.TableID);
+                cmd.Parameters.AddWithValue("@name", reservation.CustomerName);
+                cmd.Parameters.AddWithValue("@phone", reservation.CustomerPhone);
+                cmd.Parameters.AddWithValue("@guests", reservation.GuestsCount);
+                cmd.Parameters.AddWithValue("@date", reservation.ReservationDate);
+                cmd.Parameters.AddWithValue("@status", reservation.Status);
+                cmd.Parameters.AddWithValue("@id", reservation.ID);
 
                 try
                 {
@@ -118,20 +119,18 @@ namespace CafeAutomation.DB
                 }
             }
 
-            connection.CloseConnection();
             return result;
         }
 
         public async Task<bool> DeleteAsync(Reservations reservation)
         {
             bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
+            if (!OpenConnection()) return result;
 
             string query = "DELETE FROM Reservations WHERE ID=@id";
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("id", reservation.ID));
+                cmd.Parameters.AddWithValue("@id", reservation.ID);
 
                 try
                 {
@@ -144,16 +143,7 @@ namespace CafeAutomation.DB
                 }
             }
 
-            connection.CloseConnection();
             return result;
-        }
-
-        static ReservationsDB instance;
-        public static ReservationsDB GetDb()
-        {
-            if (instance == null)
-                instance = new ReservationsDB(DbConnection.GetDbConnection());
-            return instance;
         }
     }
 }

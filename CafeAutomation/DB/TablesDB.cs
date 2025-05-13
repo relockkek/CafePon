@@ -1,34 +1,32 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
-using CafeAutomation.Models;
 using MySqlConnector;
+using CafeAutomation.Models;
 
-namespace CafeAutomation.DB
+internal class TablesDB : BaseDB
 {
-    internal class TablesDB
+    private static TablesDB instance;
+    public static TablesDB GetDb() => instance ??= new TablesDB();
+
+    private TablesDB() { }
+
+    public bool Insert(Tables table)
     {
-        private DbConnection connection;
-
-        private TablesDB(DbConnection db)
+        bool result = false;
+        using (var db = DbConnection.GetDbConnection())
         {
-            this.connection = db;
-        }
-
-        public bool Insert(Tables table)
-        {
-            bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
+            if (!db.OpenConnection()) return result;
 
             string query = "INSERT INTO Tables (TableNumber, Capacity, Zone, IsActive) VALUES (@number, @capacity, @zone, @active); SELECT LAST_INSERT_ID();";
 
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = db.CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("number", table.TableNumber));
-                cmd.Parameters.Add(new MySqlParameter("capacity", table.Capacity));
-                cmd.Parameters.Add(new MySqlParameter("zone", table.Zone));
-                cmd.Parameters.Add(new MySqlParameter("active", table.IsActive));
+                cmd.Parameters.AddWithValue("@number", table.TableNumber);
+                cmd.Parameters.AddWithValue("@capacity", table.Capacity);
+                cmd.Parameters.AddWithValue("@zone", table.Zone);
+                cmd.Parameters.AddWithValue("@active", table.IsActive);
 
                 try
                 {
@@ -44,19 +42,20 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка при добавлении стола: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return result;
         }
 
-        public async Task<List<Tables>> SelectAllAsync()
-        {
-            List<Tables> list = new List<Tables>();
-            if (connection == null || !connection.OpenConnection())
-                return list;
+        return result;
+    }
 
-            string query = "SELECT ID, TableNumber, Capacity, Zone, IsActive FROM Tables";
-            using (var cmd = connection.CreateCommand(query))
+    public async Task<List<Tables>> SelectAllAsync()
+    {
+        List<Tables> list = new List<Tables>();
+        using (var db = DbConnection.GetDbConnection())
+        {
+            if (!db.OpenConnection()) return list;
+
+            const string query = "SELECT ID, TableNumber, Capacity, Zone, IsActive FROM Tables";
+            using (var cmd = db.CreateCommand(query))
             {
                 try
                 {
@@ -81,25 +80,26 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка загрузки столов: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return list;
         }
 
-        public async Task<bool> UpdateAsync(Tables table)
+        return list;
+    }
+
+    public async Task<bool> UpdateAsync(Tables table)
+    {
+        bool result = false;
+        using (var db = DbConnection.GetDbConnection())
         {
-            bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
+            if (!db.OpenConnection()) return result;
 
             string query = "UPDATE Tables SET TableNumber=@number, Capacity=@capacity, Zone=@zone, IsActive=@active WHERE ID=@id";
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = db.CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("number", table.TableNumber));
-                cmd.Parameters.Add(new MySqlParameter("capacity", table.Capacity));
-                cmd.Parameters.Add(new MySqlParameter("zone", table.Zone));
-                cmd.Parameters.Add(new MySqlParameter("active", table.IsActive));
-                cmd.Parameters.Add(new MySqlParameter("id", table.ID));
+                cmd.Parameters.AddWithValue("@number", table.TableNumber);
+                cmd.Parameters.AddWithValue("@capacity", table.Capacity);
+                cmd.Parameters.AddWithValue("@zone", table.Zone);
+                cmd.Parameters.AddWithValue("@active", table.IsActive);
+                cmd.Parameters.AddWithValue("@id", table.ID);
 
                 try
                 {
@@ -111,21 +111,22 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка обновления стола: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return result;
         }
 
-        public async Task<bool> DeleteAsync(Tables table)
+        return result;
+    }
+
+    public async Task<bool> DeleteAsync(Tables table)
+    {
+        bool result = false;
+        using (var db = DbConnection.GetDbConnection())
         {
-            bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
+            if (!db.OpenConnection()) return result;
 
             string query = "DELETE FROM Tables WHERE ID=@id";
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = db.CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("id", table.ID));
+                cmd.Parameters.AddWithValue("@id", table.ID);
 
                 try
                 {
@@ -137,17 +138,8 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка удаления стола: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return result;
         }
 
-        static TablesDB instance;
-        public static TablesDB GetDb()
-        {
-            if (instance == null)
-                instance = new TablesDB(DbConnection.GetDbConnection());
-            return instance;
-        }
+        return result;
     }
 }

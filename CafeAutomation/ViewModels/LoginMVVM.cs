@@ -55,7 +55,7 @@ namespace CafeAutomation.ViewModels
                 }
             }
 
-            LoginCommand = new CommandMvvm(() =>
+            LoginCommand = new CommandMvvm((_) =>
             {
                 var user = UsersDB.GetDb().FindByUsernameAndPassword(Login, Password);
                 if (user != null)
@@ -67,7 +67,7 @@ namespace CafeAutomation.ViewModels
                 {
                     MessageBox.Show("Неверный логин или пароль");
                 }
-            }, () => !string.IsNullOrEmpty(Login) && !string.IsNullOrEmpty(Password));
+            }, (_) => !string.IsNullOrEmpty(Login) && !string.IsNullOrEmpty(Password));
         }
     }
 }

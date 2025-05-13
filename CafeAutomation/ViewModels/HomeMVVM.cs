@@ -1,8 +1,11 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 using CafeAutomation.DB;
 using CafeAutomation.Models;
 using CafeAutomation.ViewModels;
+using CafeAutomation.Views;
 
 namespace CafeAutomation.ViewModels
 {
@@ -44,24 +47,48 @@ namespace CafeAutomation.ViewModels
 
         public CommandMvvm LoadReport { get; }
 
+        // Новая команда навигации к категории
+        public ICommand NavigateToCategoryCommand { get; }
+
         public HomeMVVM()
         {
-            LoadReport = new CommandMvvm(async () =>
+            LoadReport = new CommandMvvm(async (_) =>
             {
                 await LoadDataAsync();
-            }, () => true);
+            }, (_) => true);
 
-            // Автозагрузка при старте
+            // Инициализация команды перехода
+            NavigateToCategoryCommand = new CommandMvvm(_ => ExecuteNavigateToCategory(), _ => true);
+
+
+            // Автозагрузка данных
             Task.Run(LoadDataAsync);
+        }
+
+        private void ExecuteNavigateToCategory()
+        {
+            var param = "Горячие блюда"; // Пример параметра (можно передать из XAML)
+            OnNavigateToCategory(param);
+        }
+
+        private void OnNavigateToCategory(object param)
+        {
+            if (param is string categoryName)
+            {
+                var categoryPage = new CategoryPage(categoryName);
+                var mainWindow = Application.Current.MainWindow as MainWindow;
+
+                if (mainWindow != null)
+                {
+                    mainWindow.MainFrame.Content = categoryPage;
+                }
+            }
         }
 
         private async Task LoadDataAsync()
         {
             try
             {
-                // Убедимся, что соединение закрыто перед новым запросом
-                UsersDB.GetDb().CloseConnection();
-
                 var start = DateTime.Now.Date;
                 var end = DateTime.Now.Date.AddDays(1);
 

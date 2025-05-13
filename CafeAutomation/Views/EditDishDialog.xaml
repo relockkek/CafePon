@@ -1,0 +1,28 @@
+﻿<Window x:Class="CafeAutomation.Views.EditDishDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Редактирование блюда" Height="300" Width="400"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Редактирование блюда"
+                   FontSize="18" FontWeight="Bold"
+                   HorizontalAlignment="Center" Margin="0,0,0,20"/>
+
+        <StackPanel Grid.Row="1" Margin="0" VerticalAlignment="Top" >
+            <TextBox Text="{Binding Dish.Name}" Margin="0,0,0,10" />
+            <TextBox Text="{Binding Dish.Description}" Margin="0,0,0,10" />
+            <TextBox Text="{Binding Dish.Price}" Margin="0,0,0,10" />
+            <CheckBox IsChecked="{Binding Dish.IsAvailable}" Content="Доступно" />
+        </StackPanel>
+
+        <Button Content="Сохранить" Grid.Row="2" Width="100" Height="30"
+                HorizontalAlignment="Right" Click="Save_Click" />
+    </Grid>
+</Window>

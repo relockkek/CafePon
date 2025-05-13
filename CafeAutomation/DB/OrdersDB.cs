@@ -1,35 +1,33 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
-using CafeAutomation.Models;
 using MySqlConnector;
+using CafeAutomation.Models;
 
-namespace CafeAutomation.DB
+internal class OrdersDB : BaseDB
 {
-    internal class OrdersDB
+    private static OrdersDB instance;
+    public static OrdersDB GetDb() => instance ??= new OrdersDB();
+
+    private OrdersDB() { }
+
+    public bool Insert(Orders order)
     {
-        private DbConnection connection;
-
-        private OrdersDB(DbConnection db)
+        bool result = false;
+        using (var db = DbConnection.GetDbConnection())
         {
-            this.connection = db;
-        }
-
-        public bool Insert(Orders order)
-        {
-            bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
+            if (!db.OpenConnection()) return result;
 
             string query = "INSERT INTO Orders (EmployeeID, TableNumber, OrderDate, TotalAmount, StatusID) VALUES (@empId, @table, @date, @total, @statusId); SELECT LAST_INSERT_ID();";
 
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = db.CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("empId", order.EmployeeID));
-                cmd.Parameters.Add(new MySqlParameter("table", order.TableNumber));
-                cmd.Parameters.Add(new MySqlParameter("date", order.OrderDate));
-                cmd.Parameters.Add(new MySqlParameter("total", order.TotalAmount));
-                cmd.Parameters.Add(new MySqlParameter("statusId", order.StatusID));
+                cmd.Parameters.AddWithValue("@empId", order.EmployeeID);
+                cmd.Parameters.AddWithValue("@table", order.TableNumber);
+                cmd.Parameters.AddWithValue("@date", order.OrderDate);
+                cmd.Parameters.AddWithValue("@total", order.TotalAmount);
+                cmd.Parameters.AddWithValue("@statusId", order.StatusID);
 
                 try
                 {
@@ -45,19 +43,20 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка добавления заказа: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return result;
         }
 
-        public async Task<List<Orders>> SelectAllAsync()
-        {
-            List<Orders> list = new List<Orders>();
-            if (connection == null || !connection.OpenConnection())
-                return list;
+        return result;
+    }
 
-            string query = "SELECT ID, EmployeeID, TableNumber, OrderDate, TotalAmount, StatusID FROM Orders";
-            using (var cmd = connection.CreateCommand(query))
+    public async Task<List<Orders>> SelectAllAsync()
+    {
+        List<Orders> list = new List<Orders>();
+        using (var db = DbConnection.GetDbConnection())
+        {
+            if (!db.OpenConnection()) return list;
+
+            const string query = "SELECT ID, EmployeeID, TableNumber, OrderDate, TotalAmount, StatusID FROM Orders";
+            using (var cmd = db.CreateCommand(query))
             {
                 try
                 {
@@ -83,26 +82,27 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка загрузки заказов: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return list;
         }
 
-        public async Task<bool> UpdateAsync(Orders order)
+        return list;
+    }
+
+    public async Task<bool> UpdateAsync(Orders order)
+    {
+        bool result = false;
+        using (var db = DbConnection.GetDbConnection())
         {
-            bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
+            if (!db.OpenConnection()) return result;
 
             string query = "UPDATE Orders SET EmployeeID=@empId, TableNumber=@table, OrderDate=@date, TotalAmount=@total, StatusID=@statusId WHERE ID=@id";
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = db.CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("empId", order.EmployeeID));
-                cmd.Parameters.Add(new MySqlParameter("table", order.TableNumber));
-                cmd.Parameters.Add(new MySqlParameter("date", order.OrderDate));
-                cmd.Parameters.Add(new MySqlParameter("total", order.TotalAmount));
-                cmd.Parameters.Add(new MySqlParameter("statusId", order.StatusID));
-                cmd.Parameters.Add(new MySqlParameter("id", order.ID));
+                cmd.Parameters.AddWithValue("@empId", order.EmployeeID);
+                cmd.Parameters.AddWithValue("@table", order.TableNumber);
+                cmd.Parameters.AddWithValue("@date", order.OrderDate);
+                cmd.Parameters.AddWithValue("@total", order.TotalAmount);
+                cmd.Parameters.AddWithValue("@statusId", order.StatusID);
+                cmd.Parameters.AddWithValue("@id", order.ID);
 
                 try
                 {
@@ -114,21 +114,22 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка обновления заказа: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return result;
         }
 
-        public async Task<bool> DeleteAsync(Orders order)
+        return result;
+    }
+
+    public async Task<bool> DeleteAsync(Orders order)
+    {
+        bool result = false;
+        using (var db = DbConnection.GetDbConnection())
         {
-            bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
+            if (!db.OpenConnection()) return result;
 
             string query = "DELETE FROM Orders WHERE ID=@id";
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = db.CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("id", order.ID));
+                cmd.Parameters.AddWithValue("@id", order.ID);
 
                 try
                 {
@@ -140,21 +141,23 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка удаления заказа: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return result;
         }
-        public async Task<decimal> GetTotalRevenueAsync(DateTime start, DateTime end)
+
+        return result;
+    }
+
+    public async Task<decimal> GetTotalRevenueAsync(DateTime start, DateTime end)
+    {
+        decimal totalRevenue = 0;
+        using (var db = DbConnection.GetDbConnection())
         {
-            decimal totalRevenue = 0;
-            if (connection == null || !connection.OpenConnection())
-                return totalRevenue;
+            if (!db.OpenConnection()) return totalRevenue;
 
             string query = "SELECT SUM(TotalAmount) FROM Orders WHERE OrderDate BETWEEN @start AND @end";
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = db.CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("start", start));
-                cmd.Parameters.Add(new MySqlParameter("end", end));
+                cmd.Parameters.AddWithValue("@start", start);
+                cmd.Parameters.AddWithValue("@end", end);
 
                 try
                 {
@@ -164,21 +167,23 @@ namespace CafeAutomation.DB
                 }
                 catch { }
             }
-
-            connection.CloseConnection();
-            return totalRevenue;
         }
-        public async Task<int> GetOrdersCountAsync(DateTime start, DateTime end)
+
+        return totalRevenue;
+    }
+
+    public async Task<int> GetOrdersCountAsync(DateTime start, DateTime end)
+    {
+        int ordersCount = 0;
+        using (var db = DbConnection.GetDbConnection())
         {
-            int ordersCount = 0;
-            if (connection == null || !connection.OpenConnection())
-                return ordersCount;
+            if (!db.OpenConnection()) return ordersCount;
 
             string query = "SELECT COUNT(*) FROM Orders WHERE OrderDate BETWEEN @start AND @end";
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = db.CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("start", start));
-                cmd.Parameters.Add(new MySqlParameter("end", end));
+                cmd.Parameters.AddWithValue("@start", start);
+                cmd.Parameters.AddWithValue("@end", end);
 
                 try
                 {
@@ -188,16 +193,8 @@ namespace CafeAutomation.DB
                 }
                 catch { }
             }
+        }
 
-            connection.CloseConnection();
-            return ordersCount;
-        }
-        static OrdersDB instance;
-        public static OrdersDB GetDb()
-        {
-            if (instance == null)
-                instance = new OrdersDB(DbConnection.GetDbConnection());
-            return instance;
-        }
+        return ordersCount;
     }
 }

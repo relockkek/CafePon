@@ -1,34 +1,32 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
-using CafeAutomation.Models;
 using MySqlConnector;
+using CafeAutomation.Models;
 
-namespace CafeAutomation.DB
+internal class OrderItemsDB : BaseDB
 {
-    internal class OrderItemsDB
+    private static OrderItemsDB instance;
+    public static OrderItemsDB GetDb() => instance ??= new OrderItemsDB();
+
+    private OrderItemsDB() { }
+
+    public bool Insert(OrderItems item)
     {
-        private DbConnection connection;
-
-        private OrderItemsDB(DbConnection db)
+        bool result = false;
+        using (var db = DbConnection.GetDbConnection())
         {
-            this.connection = db;
-        }
-
-        public bool Insert(OrderItems item)
-        {
-            bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
+            if (!db.OpenConnection()) return result;
 
             string query = "INSERT INTO OrderItems (OrderID, DishID, Amount, PriceAtOrderTime) VALUES (@orderId, @dishId, @amount, @price); SELECT LAST_INSERT_ID();";
 
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = db.CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("orderId", item.OrderID));
-                cmd.Parameters.Add(new MySqlParameter("dishId", item.DishID));
-                cmd.Parameters.Add(new MySqlParameter("amount", item.Amount));
-                cmd.Parameters.Add(new MySqlParameter("price", item.PriceAtOrderTime));
+                cmd.Parameters.AddWithValue("@orderId", item.OrderID);
+                cmd.Parameters.AddWithValue("@dishId", item.DishID);
+                cmd.Parameters.AddWithValue("@amount", item.Amount);
+                cmd.Parameters.AddWithValue("@price", item.PriceAtOrderTime);
 
                 try
                 {
@@ -44,19 +42,20 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка при добавлении элемента заказа: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return result;
         }
 
-        public async Task<List<OrderItems>> SelectAllAsync()
-        {
-            List<OrderItems> list = new List<OrderItems>();
-            if (connection == null || !connection.OpenConnection())
-                return list;
+        return result;
+    }
 
-            string query = "SELECT ID, OrderID, DishID, Amount, PriceAtOrderTime FROM OrderItems";
-            using (var cmd = connection.CreateCommand(query))
+    public async Task<List<OrderItems>> SelectAllAsync()
+    {
+        List<OrderItems> list = new List<OrderItems>();
+        using (var db = DbConnection.GetDbConnection())
+        {
+            if (!db.OpenConnection()) return list;
+
+            const string query = "SELECT ID, OrderID, DishID, Amount, PriceAtOrderTime FROM OrderItems";
+            using (var cmd = db.CreateCommand(query))
             {
                 try
                 {
@@ -81,25 +80,26 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка загрузки элементов заказа: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return list;
         }
 
-        public async Task<bool> UpdateAsync(OrderItems item)
+        return list;
+    }
+
+    public async Task<bool> UpdateAsync(OrderItems item)
+    {
+        bool result = false;
+        using (var db = DbConnection.GetDbConnection())
         {
-            bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
+            if (!db.OpenConnection()) return result;
 
             string query = "UPDATE OrderItems SET OrderID=@orderId, DishID=@dishId, Amount=@amount, PriceAtOrderTime=@price WHERE ID=@id";
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = db.CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("orderId", item.OrderID));
-                cmd.Parameters.Add(new MySqlParameter("dishId", item.DishID));
-                cmd.Parameters.Add(new MySqlParameter("amount", item.Amount));
-                cmd.Parameters.Add(new MySqlParameter("price", item.PriceAtOrderTime));
-                cmd.Parameters.Add(new MySqlParameter("id", item.ID));
+                cmd.Parameters.AddWithValue("@orderId", item.OrderID);
+                cmd.Parameters.AddWithValue("@dishId", item.DishID);
+                cmd.Parameters.AddWithValue("@amount", item.Amount);
+                cmd.Parameters.AddWithValue("@price", item.PriceAtOrderTime);
+                cmd.Parameters.AddWithValue("@id", item.ID);
 
                 try
                 {
@@ -111,21 +111,22 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка обновления элемента заказа: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return result;
         }
 
-        public async Task<bool> DeleteAsync(OrderItems item)
+        return result;
+    }
+
+    public async Task<bool> DeleteAsync(OrderItems item)
+    {
+        bool result = false;
+        using (var db = DbConnection.GetDbConnection())
         {
-            bool result = false;
-            if (connection == null || !connection.OpenConnection())
-                return result;
+            if (!db.OpenConnection()) return result;
 
             string query = "DELETE FROM OrderItems WHERE ID=@id";
-            using (var cmd = connection.CreateCommand(query))
+            using (var cmd = db.CreateCommand(query))
             {
-                cmd.Parameters.Add(new MySqlParameter("id", item.ID));
+                cmd.Parameters.AddWithValue("@id", item.ID);
 
                 try
                 {
@@ -137,17 +138,8 @@ namespace CafeAutomation.DB
                     MessageBox.Show("Ошибка удаления элемента заказа: " + ex.Message);
                 }
             }
-
-            connection.CloseConnection();
-            return result;
         }
 
-        static OrderItemsDB instance;
-        public static OrderItemsDB GetDb()
-        {
-            if (instance == null)
-                instance = new OrderItemsDB(DbConnection.GetDbConnection());
-            return instance;
-        }
+        return result;
     }
 }

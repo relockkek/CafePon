@@ -40,7 +40,7 @@ namespace CafeAutomation.ViewModels
         {
             LoadDataAsync();
 
-            AddTable = new CommandMvvm(() =>
+            AddTable = new CommandMvvm((_) =>
             {
                 var table = new Tables
                 {
@@ -55,25 +55,25 @@ namespace CafeAutomation.ViewModels
                     LoadDataAsync();
                     SelectedTable = table;
                 }
-            }, () => true);
+            }, (_) => true);
 
-            UpdateTable = new CommandMvvm(async () =>
+            UpdateTable = new CommandMvvm(async (_) =>
             {
                 if (SelectedTable != null && await TablesDB.GetDb().UpdateAsync(SelectedTable))
                 {
                     MessageBox.Show("Обновлён стол");
                     await LoadDataAsync();
                 }
-            }, () => SelectedTable != null);
+            }, (_) => SelectedTable != null);
 
-            RemoveTable = new CommandMvvm(async () =>
+            RemoveTable = new CommandMvvm(async (_) =>
             {
                 if (SelectedTable != null && await TablesDB.GetDb().DeleteAsync(SelectedTable))
                 {
                     MessageBox.Show("Стол удалён");
                     await LoadDataAsync();
                 }
-            }, () => SelectedTable != null);
+            }, (_) => SelectedTable != null);
         }
 
         private async Task LoadDataAsync()

@@ -48,7 +48,7 @@ namespace CafeAutomation.ViewModels
 
         public ReportsMVVM()
         {
-            LoadReport = new CommandMvvm(async () =>
+            LoadReport = new CommandMvvm(async (_) =>
             {
                 try
                 {
@@ -72,7 +72,7 @@ namespace CafeAutomation.ViewModels
                 {
                     MessageBox.Show("Ошибка загрузки отчёта: " + ex.Message);
                 }
-            }, () => true);
+            }, (_) => true);
         }
     }
 }

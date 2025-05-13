@@ -40,7 +40,7 @@ namespace CafeAutomation.ViewModels
         {
             LoadDataAsync();
 
-            AddStatus = new CommandMvvm(() =>
+            AddStatus = new CommandMvvm((_) =>
             {
                 var status = new Status
                 {
@@ -52,25 +52,25 @@ namespace CafeAutomation.ViewModels
                     LoadDataAsync();
                     SelectedStatus = status;
                 }
-            }, () => true);
+            }, (_) => true);
 
-            UpdateStatus = new CommandMvvm(async () =>
+            UpdateStatus = new CommandMvvm(async (_) =>
             {
                 if (SelectedStatus != null && await StatusDB.GetDb().UpdateAsync(SelectedStatus))
                 {
                     MessageBox.Show("Статус обновлён");
                     await LoadDataAsync();
                 }
-            }, () => SelectedStatus != null);
+            }, (_) => SelectedStatus != null);
 
-            RemoveStatus = new CommandMvvm(async () =>
+            RemoveStatus = new CommandMvvm(async (_) =>
             {
                 if (SelectedStatus != null && await StatusDB.GetDb().DeleteAsync(SelectedStatus))
                 {
                     MessageBox.Show("Статус удалён");
                     await LoadDataAsync();
                 }
-            }, () => SelectedStatus != null);
+            }, (_) => SelectedStatus != null);
         }
 
         private async Task LoadDataAsync()

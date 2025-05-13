@@ -40,7 +40,7 @@ namespace CafeAutomation.ViewModels
         {
             LoadDataAsync();
 
-            AddItem = new CommandMvvm(() =>
+            AddItem = new CommandMvvm((_) =>
             {
                 var newItem = new OrderItems
                 {
@@ -55,25 +55,25 @@ namespace CafeAutomation.ViewModels
                     LoadDataAsync();
                     SelectedItem = newItem;
                 }
-            }, () => true);
+            }, (_) => true);
 
-            UpdateItem = new CommandMvvm(async () =>
+            UpdateItem = new CommandMvvm(async (_) =>
             {
                 if (SelectedItem != null && await OrderItemsDB.GetDb().UpdateAsync(SelectedItem))
                 {
                     MessageBox.Show("Обновлено");
                     await LoadDataAsync();
                 }
-            }, () => SelectedItem != null);
+            }, (_) => SelectedItem != null);
 
-            RemoveItem = new CommandMvvm(async () =>
+            RemoveItem = new CommandMvvm(async (_) =>
             {
                 if (SelectedItem != null && await OrderItemsDB.GetDb().DeleteAsync(SelectedItem))
                 {
                     MessageBox.Show("Удалено");
                     await LoadDataAsync();
                 }
-            }, () => SelectedItem != null);
+            }, (_) => SelectedItem != null);
         }
 
         private async Task LoadDataAsync()

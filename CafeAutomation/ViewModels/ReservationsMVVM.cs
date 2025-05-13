@@ -40,7 +40,7 @@ namespace CafeAutomation.ViewModels
         {
             LoadDataAsync();
 
-            AddReservation = new CommandMvvm(() =>
+            AddReservation = new CommandMvvm((_) =>
             {
                 var res = new Reservations
                 {
@@ -56,25 +56,25 @@ namespace CafeAutomation.ViewModels
                     LoadDataAsync();
                     SelectedReservation = res;
                 }
-            }, () => true);
+            }, (_) => true);
 
-            UpdateReservation = new CommandMvvm(async () =>
+            UpdateReservation = new CommandMvvm(async (_) =>
             {
                 if (SelectedReservation != null && await ReservationsDB.GetDb().UpdateAsync(SelectedReservation))
                 {
                     MessageBox.Show("Обновлено");
                     await LoadDataAsync();
                 }
-            }, () => SelectedReservation != null);
+            }, (_) => SelectedReservation != null);
 
-            RemoveReservation = new CommandMvvm(async () =>
+            RemoveReservation = new CommandMvvm(async (_) =>
             {
                 if (SelectedReservation != null && await ReservationsDB.GetDb().DeleteAsync(SelectedReservation))
                 {
                     MessageBox.Show("Удалено");
                     await LoadDataAsync();
                 }
-            }, () => SelectedReservation != null);
+            }, (_) => SelectedReservation != null);
         }
 
         private async Task LoadDataAsync()
