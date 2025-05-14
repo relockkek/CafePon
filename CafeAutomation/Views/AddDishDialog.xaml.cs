@@ -1,14 +1,16 @@
-﻿using System.Windows;
+﻿using System;
+using System.IO;
+using System.Windows;
+using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 using CafeAutomation.Models;
-using System.IO;
-using System.Windows.Media.Imaging;
 
 namespace CafeAutomation.Views
 {
     public partial class AddDishDialog : Window
     {
         public Dishes ResultDish { get; private set; }
+        private string selectedImagePath;
 
         public AddDishDialog(string category)
         {
@@ -25,11 +27,26 @@ namespace CafeAutomation.Views
 
             if (dialog.ShowDialog() == true)
             {
-                ImagePathBox.Text = dialog.FileName;
+                string sourcePath = dialog.FileName;
+                string fileName = Path.GetFileName(sourcePath);
+                string imagesFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images");
 
-                // Предпросмотр
-                BitmapImage image = new BitmapImage(new Uri(dialog.FileName));
-                PreviewImage.Source = image;
+                // Создать папку, если её нет
+                if (!Directory.Exists(imagesFolder))
+                    Directory.CreateDirectory(imagesFolder);
+
+                string destPath = Path.Combine(imagesFolder, fileName);
+
+                try
+                {
+                    File.Copy(sourcePath, destPath, true); // перезапись
+                    selectedImagePath = Path.Combine("Images", fileName); // относительный путь
+                    PreviewImage.Source = new BitmapImage(new Uri(destPath));
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Ошибка копирования изображения: " + ex.Message);
+                }
             }
         }
 
@@ -59,7 +76,7 @@ namespace CafeAutomation.Views
                 Description = DescriptionBox.Text.Trim(),
                 Price = price,
                 Category = CategoryBox.SelectedItem.ToString(),
-                ImagePath = ImagePathBox.Text,
+                ImageData = ImageFromBytes,
                 IsAvailable = true
             };
 

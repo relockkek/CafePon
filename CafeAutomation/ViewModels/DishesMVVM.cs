@@ -8,7 +8,7 @@ using System.Windows.Input;
 
 namespace CafeAutomation.ViewModels
 {
-    internal class DishesMVVM : BaseVM
+    public class DishesMVVM : BaseVM
     {
         private Dishes selectedDish;
         private ObservableCollection<Dishes> dishes = new();

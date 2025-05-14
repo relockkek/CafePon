@@ -15,9 +15,6 @@ using CafeAutomation.ViewModels;
 
 namespace CafeAutomation.Views
 {
-    /// <summary>
-    /// Логика взаимодействия для CreateOrderDialog.xaml
-    /// </summary>
     public partial class CreateOrderDialog : Window
     {
         public CreateOrderDialog()

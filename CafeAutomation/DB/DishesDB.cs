@@ -19,7 +19,7 @@ internal class DishesDB : BaseDB
         {
             if (!db.OpenConnection()) return result;
 
-            string query = "INSERT INTO Dishes (Name, Price, Category, Description, IsAvailable) VALUES (@name, @price, @category, @desc, @available); SELECT LAST_INSERT_ID();";
+            string query = "INSERT INTO Dishes (Name, Price, Category, Description, IsAvailable, ImageData) VALUES (@name, @price, @category, @desc, @available, @image); SELECT LAST_INSERT_ID();";
 
             using (var cmd = db.CreateCommand(query))
             {
@@ -28,6 +28,7 @@ internal class DishesDB : BaseDB
                 cmd.Parameters.AddWithValue("@category", dish.Category);
                 cmd.Parameters.AddWithValue("@desc", dish.Description);
                 cmd.Parameters.AddWithValue("@available", dish.IsAvailable);
+                cmd.Parameters.AddWithValue("@image", dish.ImageData ?? (object)DBNull.Value);
 
                 try
                 {
@@ -55,7 +56,7 @@ internal class DishesDB : BaseDB
         {
             if (!db.OpenConnection()) return list;
 
-            const string query = "SELECT ID, Name, Price, Category, Description, IsAvailable FROM Dishes";
+            const string query = "SELECT ID, Name, Price, Category, Description, IsAvailable, ImageData FROM Dishes";
             using (var cmd = db.CreateCommand(query))
             {
                 try
@@ -71,7 +72,8 @@ internal class DishesDB : BaseDB
                             Price = reader.GetDecimal(2),
                             Category = reader.IsDBNull(3) ? "" : reader.GetString(3),
                             Description = reader.IsDBNull(4) ? "" : reader.GetString(4),
-                            IsAvailable = reader.GetBoolean(5)
+                            IsAvailable = reader.GetBoolean(5),
+                            ImageData = reader.IsDBNull(6) ? null : (byte[])reader["ImageData"]
                         });
                     }
 
@@ -94,7 +96,8 @@ internal class DishesDB : BaseDB
         {
             if (!db.OpenConnection()) return result;
 
-            string query = "UPDATE Dishes SET Name=@name, Price=@price, Category=@category, Description=@desc, IsAvailable=@available WHERE ID=@id";
+            string query = "UPDATE Dishes SET Name=@name, Price=@price, Category=@category, Description=@desc, IsAvailable=@available, ImageData=@image WHERE ID=@id";
+
             using (var cmd = db.CreateCommand(query))
             {
                 cmd.Parameters.AddWithValue("@name", dish.Name);
@@ -103,7 +106,7 @@ internal class DishesDB : BaseDB
                 cmd.Parameters.AddWithValue("@desc", dish.Description);
                 cmd.Parameters.AddWithValue("@available", dish.IsAvailable);
                 cmd.Parameters.AddWithValue("@id", dish.ID);
-
+                cmd.Parameters.AddWithValue("@image", dish.ImageData ?? (object)DBNull.Value); 
                 try
                 {
                     int rowsAffected = await Task.Run(() => cmd.ExecuteNonQuery());
@@ -118,7 +121,6 @@ internal class DishesDB : BaseDB
 
         return result;
     }
-
     public async Task<bool> DeleteAsync(Dishes dish)
     {
         bool result = false;

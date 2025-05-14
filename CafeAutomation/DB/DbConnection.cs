@@ -10,7 +10,7 @@ public class DbConnection : IDisposable
     {
         var sb = new MySqlConnectionStringBuilder
         {
-            Server = "95.154.107.102",
+            Server = "192.168.200.13",
             UserID = "student",
             Password = "student",
             Database = "CafeAutomation",
