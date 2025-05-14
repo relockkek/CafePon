@@ -12,7 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using CafeAutomation.ViewModels;
-
+using CafeAutomation.Converters;
 namespace CafeAutomation.Views
 {
     public partial class CreateOrderDialog : Window
